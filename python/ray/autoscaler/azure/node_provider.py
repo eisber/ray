@@ -224,24 +224,32 @@ class AzureNodeProvider(NodeProvider):
     def terminate_node(self, node_id):
         """Terminates the specified node. This will delete the VM and
            associated resources (NIC, IP, Storage) for the specified node."""
-        # self.compute_client.virtual_machines.deallocate(
-        # resource_group_name=self.provider_config["resource_group"],
-        # vm_name=node_id)
+
         resource_group = self.provider_config["resource_group"]
+        try:
+            # get metadata for node
+            metadata = self._get_node(node_id)
+        except KeyError:
+            # node no longer exists
+            return
+
+        # TODO: deallocate instead of delete to allow possible reuse
+        # self.compute_client.virtual_machines.deallocate(
+        #   resource_group_name=resource_group,
+        #   vm_name=node_id)
+
+        # gather disks to delete later
         vm = self.compute_client.virtual_machines.get(
             resource_group_name=resource_group, vm_name=node_id)
-        disks = vm.storage_profile.data_disks
-        disks.append(vm.storage_profile.os_disk)
+        disks = {d.name for d in vm.storage_profile.data_disks}
+        disks.add(vm.storage_profile.os_disk.name)
 
         try:
-            # delete machine
+            # delete machine, must wait for this to complete
             self.compute_client.virtual_machines.delete(
                 resource_group_name=resource_group, vm_name=node_id).wait()
         except Exception as e:
             logger.warning("Failed to delete VM: {}".format(e))
-
-        # get metadata
-        metadata = self._get_node(node_id)
 
         try:
             # delete nic
@@ -250,7 +258,7 @@ class AzureNodeProvider(NodeProvider):
                 network_interface_name=metadata["nic_name"])
         except Exception as e:
             logger.warning("Failed to delete nic: {}".format(e))
-        
+
         # delete ip address
         if "public_ip_name" in metadata:
             try:
@@ -260,13 +268,13 @@ class AzureNodeProvider(NodeProvider):
             except Exception as e:
                 logger.warning("Failed to delete public ip: {}".format(e))
 
-        try:
-            # delete disks
-            for disk in disks:
+        # delete disks
+        for disk in disks:
+            try:
                 self.compute_client.disks.delete(
-                    resource_group_name=resource_group, disk_name=disk.name)
-        except Exception as e:
-            logger.warning("Failed to delete disk: {}".format(e))
+                    resource_group_name=resource_group, disk_name=disk)
+            except Exception as e:
+                logger.warning("Failed to delete disk: {}".format(e))
 
     def _get_node(self, node_id):
         self._get_filtered_nodes({})  # Side effect: updates cache
