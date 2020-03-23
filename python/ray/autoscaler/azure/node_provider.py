@@ -34,8 +34,8 @@ def synchronized(f):
 
 
 class AzureNodeProvider(NodeProvider):
-    """Node Provider for Azure.
-    
+    """Node Provider for Azure
+
     This provider assumes Azure credentials are set by running ``az login``
     and the default subscription is configured through ``az account``
     or set in the ``provider`` field of the autoscaler configuration.

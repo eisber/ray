@@ -49,6 +49,7 @@ ray_autoscaler_files = [
     "ray/autoscaler/local/example-full.yaml",
     "ray/autoscaler/kubernetes/example-full.yaml",
     "ray/autoscaler/kubernetes/kubectl-rsync.sh",
+    "ray/autoscaler/ray-schema.json"
 ]
 
 ray_project_files = [
@@ -78,14 +79,16 @@ extras = {
     "debug": [],
     "dashboard": [],
     "serve": ["uvicorn", "pygments", "werkzeug", "flask", "pandas", "blist"],
-    "tune": ["tabulate", "tensorboardX"],
+    "tune": ["tabulate", "tensorboardX"]
 }
 
 extras["rllib"] = extras["tune"] + [
-    "pyyaml",
+    "atari_py",
+    "dm_tree",
     "gym[atari]",
-    "opencv-python-headless",
     "lz4",
+    "opencv-python-headless",
+    "pyyaml",
     "scipy",
 ]
 
@@ -173,11 +176,9 @@ requires = [
     "numpy >= 1.16",
     "filelock",
     "jsonschema",
-    "funcsigs",
     "click",
     "colorama",
     "packaging",
-    "pytest",
     "pyyaml",
     "jsonschema",
     "importlib_resources",
