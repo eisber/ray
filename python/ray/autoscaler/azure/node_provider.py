@@ -2,6 +2,7 @@ import json
 import logging
 import os
 from threading import RLock
+from uuid import uuid4
 
 from azure.common.client_factory import get_client_from_cli_profile
 from msrestazure.azure_active_directory import MSIAuthentication
@@ -188,9 +189,10 @@ class AzureNodeProvider(NodeProvider):
         config_tags[TAG_RAY_CLUSTER_NAME] = self.cluster_name
 
         name_tag = config_tags.get(TAG_RAY_NODE_NAME, "node")
+        unique_id = uuid4().hex[:VM_NAME_UUID_LEN]
 
         parameters = node_config['azure_arm_parameters'].copy()
-        parameters["vmName"] = "{name}".format(name=name_tag)
+        parameters["vmName"] = "{name}-{id}".format(name=name_tag, id=unique_id)
         parameters["provisionPublicIp"] = not self.provider_config.get("use_internal_ips", False)
         parameters["vmTags"] = config_tags
         parameters["vmCount"] = count

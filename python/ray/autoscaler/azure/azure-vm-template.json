@@ -198,7 +198,7 @@
                     ]
                 },
                 "osProfile": {
-                    "computerName": "[parameters('vmName')]",
+                    "computerName": "[concat(parameters('vmName'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('publicKey')]",
                     "linuxConfiguration": {
